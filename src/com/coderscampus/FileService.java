@@ -3,7 +3,7 @@ package com.coderscampus;
 import java.io.*;
 
 public class FileService {
-    public String[] read(String filePath) throws IOException {
+    public String[] read(String filePath) {
         int lineCount = 0;
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath))) {
             bufferedReader.readLine();
