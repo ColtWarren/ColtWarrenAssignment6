@@ -1,27 +1,21 @@
 package com.coderscampus;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileService {
     public String[] read(String filePath) {
-        int lineCount = 0;
+        List<String> lines = new ArrayList<>();
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath))) {
-            bufferedReader.readLine();
-            while (bufferedReader.readLine() != null)
-                lineCount++;
-        } catch (IOException e) {
-            System.out.println("There was an error counting lines in " + filePath + " : " + e.getMessage());
-        }
-
-        String[] lines = new String[lineCount];
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath))) {
-            bufferedReader.readLine();
-            for (int i = 0; i < lineCount; i++) {
-                lines[i] = bufferedReader.readLine();
+            bufferedReader.readLine(); // Skip header
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                lines.add(line);
             }
         } catch (IOException e) {
-            System.out.println("There was an error counting lines in " + filePath + " : " + e.getMessage());
+            System.err.println("Error reading file: " + filePath + " - " + e.getMessage());
         }
-        return lines;
+        return lines.toArray(new String[0]);
     }
 }

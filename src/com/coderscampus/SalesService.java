@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
                             int sales = Integer.parseInt(parts[1].trim());
                             return new SalesData(date, sales);
                         } catch (Exception e) {
-                            System.err.println("File error for " + line);
+                            System.err.println("File error for " + line + " | Error: " + e.getMessage());
                             return null;
                         }
                     })

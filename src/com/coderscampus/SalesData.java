@@ -29,10 +29,7 @@ public class SalesData {
 
     @Override
     public String toString() {
-        return "SalesData{" +
-                "date=" + date +
-                ", sales=" + sales +
-                '}';
+        return "Date " + date + " Sales " + sales;
     }
 }
 
