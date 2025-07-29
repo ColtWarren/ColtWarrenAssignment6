@@ -1,11 +1,13 @@
 package com.coderscampus;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileService {
-    public String[] read(String filePath) {
+    public List<String> read(String filePath) {
         List<String> lines = new ArrayList<>();
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath))) {
             bufferedReader.readLine(); // Skip header
@@ -16,6 +18,6 @@ public class FileService {
         } catch (IOException e) {
             System.err.println("Error reading file: " + filePath + " - " + e.getMessage());
         }
-        return lines.toArray(new String[0]);
+        return lines;
     }
 }

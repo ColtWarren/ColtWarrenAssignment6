@@ -1,83 +1,90 @@
 package com.coderscampus;
 
-import java.io.IOException;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-    public class SalesService {
-        private final FileService fileService = new FileService();
-        private final DateTimeFormatter inputFormatter =
-                DateTimeFormatter.ofPattern("MMM-yy").withLocale(Locale.US);
-        private final DateTimeFormatter outputFormatter =
-                DateTimeFormatter.ofPattern("yyyy-MM");
+public class SalesService {
+    private final FileService fileService = new FileService();
+    private final DateTimeFormatter inputFormatter =
+            DateTimeFormatter.ofPattern("MMM-yy").withLocale(Locale.US);
+    private final DateTimeFormatter outputFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM");
 
-        public void generateSalesReport() throws IOException {
-            processModel("Model 3", "model3.csv");
-            processModel("Model S", "modelS.csv");
-            processModel("Model X", "modelX.csv");
+    public void generateSalesReport(List<String> models ) {
+
+        for (String model : models) {
+            processModel("Model " + model, "model" + model + ".csv");
+        }
+    }
+
+    private void processModel(String modelName, String fileName) {
+        List<String> lines = fileService.read(fileName);
+        List<SalesData> salesData = lines.stream()
+                .map(line -> {
+                    try {
+                        String[] parts = line.split(",");
+                        YearMonth date = YearMonth.parse(parts[0], inputFormatter);
+                        int sales = Integer.parseInt(parts[1].trim());
+                        return new SalesData(date, sales);
+                    } catch (Exception e) {
+                        System.err.println("File error for " + line + " | Error: " + e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (salesData.isEmpty()) {
+            System.err.println("File error for " + modelName);
+            return;
         }
 
-        private void processModel(String modelName, String fileName) throws IOException {
-            String[] lines = fileService.read(fileName);
-            List<SalesData> salesData = Arrays.stream(lines)
-                    .map(line -> {
-                        try {
-                            String[] parts = line.split(",");
-                            YearMonth date = YearMonth.parse(parts[0], inputFormatter);
-                            int sales = Integer.parseInt(parts[1].trim());
-                            return new SalesData(date, sales);
-                        } catch (Exception e) {
-                            System.err.println("File error for " + line + " | Error: " + e.getMessage());
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+        Map<Integer, Integer> yearlySales = salesData.stream()
+                .collect(Collectors.groupingBy(
+                        data -> data.getDate().getYear(),
+                        TreeMap::new,
+                        Collectors.summingInt(SalesData::getSales)
+                ));
 
-            if (salesData.isEmpty()) {
-                System.err.println("File error for " + modelName);
-                return;
-            }
+        SalesData bestMonth = getBestMonth(salesData);
 
-            Map<Integer, Integer> yearlySales = salesData.stream()
-                    .collect(Collectors.groupingBy(
-                            data -> data.getDate().getYear(),
-                            TreeMap::new,
-                            Collectors.summingInt(SalesData::getSales)
-                    ));
+        SalesData worstMonth = getWorstMonth(salesData);
 
-            SalesData bestMonth = salesData.stream()
-                    .max(Comparator.comparingInt(SalesData::getSales))
-                    .orElseThrow();
+        printReport(modelName, yearlySales, bestMonth, worstMonth);
 
-            SalesData worstMonth = salesData.stream()
-                    .min(Comparator.comparingInt(SalesData::getSales))
-                    .orElseThrow();
+    }
 
-            printReport(modelName, yearlySales, bestMonth, worstMonth);
+    private static SalesData getWorstMonth(List<SalesData> salesData) {
+        return salesData.stream()
+                .min(Comparator.comparingInt(SalesData::getSales))
+                .orElseThrow();
+    }
 
-        }
+    private static SalesData getBestMonth(List<SalesData> salesData) {
+        return salesData.stream()
+                .max(Comparator.comparingInt(SalesData::getSales))
+                .orElseThrow();
+    }
 
-        private void printReport(String modelName,
-                                 Map<Integer, Integer> yearlySales,
-                                 SalesData bestMonth,
-                                 SalesData worstMonth) {
+    private void printReport(String modelName,
+                             Map<Integer, Integer> yearlySales,
+                             SalesData bestMonth,
+                             SalesData worstMonth) {
 
-            System.out.println(modelName + " Yearly Sales Report");
-            System.out.println("---------------------------");
+        System.out.println(modelName + " Yearly Sales Report");
+        System.out.println("---------------------------");
 
-            yearlySales.forEach((year, total) ->
-                    System.out.println(year + " -> " + total)
-            );
+        yearlySales.forEach((year, total) ->
+                System.out.println(year + " -> " + total)
+        );
 
-            System.out.println("The best month for " + modelName + " was: "
-                    + bestMonth.getDate().format(outputFormatter));
-            System.out.println("The worst month for " + modelName + " was: "
-                    + worstMonth.getDate().format(outputFormatter));
-            System.out.println();
-        }
+        System.out.println("The best month for " + modelName + " was: "
+                + bestMonth.getDate().format(outputFormatter));
+        System.out.println("The worst month for " + modelName + " was: "
+                + worstMonth.getDate().format(outputFormatter));
+        System.out.println();
+    }
 }
 
